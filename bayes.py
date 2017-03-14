@@ -2,30 +2,51 @@ import sys
 import copy
 import fileinput
 
+'REFERENCES: http://isites.harvard.edu/fs/docs/icb.topic540049.files/cs181_lec22_handout.pdf'
+
+#define the structure
+class Node(object):
+    def __init__(self):
+        self.name = None #actual value (Node name)
+        self.ancestors = None  
+        self.probabilities = None  #probabilities given from the input file
+        
+#return False, True value of the sign given
+def getValue(p):
+    sign = p[0]
+    if sign == "+":
+        sign = True
+    else:
+        sign = False
+    return sign
+    
+        
 #main
 input = fileinput.input()
 aux = 0
 bayesNet = []
+nodes = []
 Queries = []
 Probabilities = []
-states = []
-states2 = []
+states = [] #all variables
 
 #Get Nodes, Probabilities and Queries from the file
 for line in input:
     #Get Nodes
     if aux == 1:
-        states2 = line.rstrip('\n')
-        states2 = states2.split(", ")
+        nodes = line.rstrip('\n')
+        nodes = nodes.split(", ")
         aux = 0
-
+    
+    #Get probabilities
     if aux == 2:
         if line != '\n':
             probability = line.rstrip('\n')
             Probabilities.append(probability)
         else:
             aux = 0
-
+    
+    #Get Queries
     if aux == 3:
         if line != '\n':
             query = line.rstrip('\n')
@@ -41,3 +62,78 @@ for line in input:
 
     if line == "[Queries]\n":
         aux = 3
+    
+# print 'nodes', nodes;
+# print 'Queries', Queries;
+# print 'Probabilities', Probabilities;
+
+#create nodes
+for state in nodes:
+    node = Node();
+    node.name = state
+    node.ancestors = []
+    node.probabilities = {}
+    #add node to the bayes Net
+    bayesNet.append(node)
+
+#for each probability, add ancestors and probabilities to the node
+for prob in Probabilities:
+    prob = prob.replace(" ", "") #remove blank spaces
+    
+    #if there is evidence 
+    if prob.find('|') != -1: 
+        getGiven = prob.find('|')
+        variable = prob[1:getGiven]
+        if not variable in states:
+            states.append(variable)
+    else:
+        getEqual = prob.find('=') + 1
+        variable = prob[1:getEqual-1]
+        if not variable in states:
+            states.append(variable)
+
+    #find the corresponded node
+    for node in bayesNet:
+        if node.name == variable:
+            #get value, variable and ancestors
+            if prob.find('|') != -1:
+                #Get the value
+                getEqual = prob.find('=') + 1
+                value = prob[getEqual:]
+                #get ancestors
+                ancestors = []
+
+                if prob.find(',') != -1:
+                    conditions = prob[getGiven+1: getEqual-1].split(',')
+
+                    signs = []
+                    for condition in conditions:
+                        sign = getValue(condition)
+                        signs.append(sign)
+                        ancestor = condition[1:]
+                        ancestors.append(ancestor)
+
+                    node.probabilities.update({tuple(signs):float(value)})
+                    node.ancestors = ancestors
+                else:
+                    #get value of sign
+                    sign = getValue(prob[getGiven+1:])
+
+                    #Get value of prob
+                    getEqual = prob.find('=') + 1
+                    value = float(prob[getEqual:])
+
+                    ancestors.append(prob[getGiven+2: getEqual-1])
+                    node.ancestors = ancestors #add ancestors to the node
+
+                    node.probabilities.update({(sign,):value}) #add probabilities
+
+            else:
+                #get value of sign
+                sign = getValue(prob)
+
+                #Get the value
+                getEqual = prob.find('=') + 1
+                value = float(prob[getEqual:])
+                node.ancestors = []
+                node.probabilities = {(sign,):value}
