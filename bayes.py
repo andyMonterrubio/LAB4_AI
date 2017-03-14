@@ -2,7 +2,7 @@ import sys
 import copy
 import fileinput
 
-'REFERENCES: http://isites.harvard.edu/fs/docs/icb.topic540049.files/cs181_lec22_handout.pdf'
+#REFERENCES: http://isites.harvard.edu/fs/docs/icb.topic540049.files/cs181_lec22_handout.pdf
 
 #define the structure
 class Node(object):
@@ -137,3 +137,55 @@ for prob in Probabilities:
                 value = float(prob[getEqual:])
                 node.ancestors = []
                 node.probabilities = {(sign,):value}
+                
+# for node in bayesNet:
+#     print 'variable:', node.name
+#     print 'ancestors:', node.ancestors
+#     print 'probabilities:', node.probabilities
+
+#for each Query, get each state and sign
+for query in Queries:
+    query = query.replace(" ", "") # delete blank spaces
+
+    queryAssignment = []
+    evidence = []
+    events = {}
+    
+    #if there is evidence
+    if query.find('|') != -1:
+        getGiven = query.find('|')
+        assigment = query[:getGiven]
+        ev = query[getGiven+1:]
+        
+        #more than one query
+        if assigment.find(',') != -1: 
+            queryAssignment = assigment.split(',')
+            evidence = ev.split(',')
+
+            #create dictionary of events
+            signs = []
+            for e in evidence:
+                sign = getValue(e)
+                value = e[1:]
+                events.update({value:sign})
+
+        else: # only one query
+            evidence = ev.split(',')
+
+            typeRes = getValue(assigment)
+            variable = assigment[1:]
+
+            #create dictionary of events
+            signs = []
+            for e in evidence:
+                sign = getValue(e)
+                value = e[1:]
+                events.update({value:sign})
+                
+            # print 'queryAssignment', queryAssignment
+            # print 'events', events
+                
+
+    else:
+        typeRes = getValue(query)
+        variable = query[1:]
