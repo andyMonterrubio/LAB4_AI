@@ -165,7 +165,6 @@ def getSign(p):
 
 
 if __name__ == "__main__":
-    input = fileinput.input()
     aux = 0
     bayesNet = {}
     nodes = []
@@ -174,36 +173,36 @@ if __name__ == "__main__":
     states = []  # all variables
 
     # Get Nodes, Probabilities and Queries from the file
-    for line in input:
+    for line in fileinput.input():
         # Get Nodes
         if aux == 1:
-            nodes = line.rstrip('\n')
+            nodes = line.rstrip('\r\n')
             nodes = nodes.split(", ")
             aux = 0
 
         # Get Probabilities
         if aux == 2:
-            if line != '\n':
-                probability = line.rstrip('\n')
+            probability = line.rstrip('\r\n')
+            if len(probability) > 0:
                 Probabilities.append(probability)
             else:
                 aux = 0
 
         # Get Queries
         if aux == 3:
-            if line != '\n':
-                query = line.rstrip('\n')
+            query = line.rstrip('\r\n')
+            if len(query) > 0:
                 Queries.append(query)
             else:
                 aux = 0
 
-        if line == "[Nodes]\n":
+        if line.startswith("[Nodes]"):
             aux = 1
 
-        if line == "[Probabilities]\n":
+        if line.startswith("[Probabilities]"):
             aux = 2
 
-        if line == "[Queries]\n":
+        if line.startswith("[Queries]"):
             aux = 3
 
         # print 'nodes', nodes;
