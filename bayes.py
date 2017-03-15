@@ -1,231 +1,296 @@
-import sys
-import copy
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 import fileinput
 
-#REFERENCES: http://isites.harvard.edu/fs/docs/icb.topic540049.files/cs181_lec22_handout.pdf
 
-#define the structure
+# define the structure
 class Node(object):
     def __init__(self):
-        self.name = None #actual value (Node name)
-        self.ancestors = None  
-        self.probabilities = None  #probabilities given from the input file
-    
-#create all nodes
+        self.name = None  # actual value (Node name)
+        self.ancestors = None
+        self.probabilities = None  # probabilities given from the input file
+
+
+# create all nodes
 def createNodes(nodes):
-    for state in nodes:
-        node = Node();
-        node.name = state
+    for name in nodes:
+        # create node
+        node = Node()
+        node.name = name
         node.ancestors = []
         node.probabilities = {}
-        #add node to the bayes Net
-        bayesNet.append(node)
 
-#return False, True value of the sign given
-def getValue(p):
+        # add node to the bayes Net
+        bayesNet[name] = node
+
+
+# return False, True value of the sign given
+def getSign(p):
     sign = p[0]
     if sign == "+":
         sign = True
     else:
         sign = False
     return sign
-    
-#for each probability given, add ancestors and probabilities to the node
-def createProbabilities(Probabilities):
-    for prob in Probabilities:
-        prob = prob.replace(" ", "") #remove blank spaces
-        
-        #if there is evidence 
-        if prob.find('|') != -1: 
+
+
+# for each probability given, add ancestors and probabilities to the node
+def createProbabilities(probabilities):
+    for prob in probabilities:
+        prob = prob.replace(" ", "")
+
+        # if there is evidence
+        if prob.find('|') != -1:
             getGiven = prob.find('|')
             variable = prob[1:getGiven]
-            if not variable in states:
+            if variable not in states:
                 states.append(variable)
         else:
             getEqual = prob.find('=') + 1
             variable = prob[1:getEqual-1]
-            if not variable in states:
+            if variable not in states:
                 states.append(variable)
-    
-        #find the corresponded node
-        for node in bayesNet:
-            if node.name == variable:
-                #get value, variable and ancestors
-                if prob.find('|') != -1:
-                    #Get the value
-                    getEqual = prob.find('=') + 1
-                    value = prob[getEqual:]
-                    #get ancestors
-                    ancestors = []
-    
-                    if prob.find(',') != -1:
-                        conditions = prob[getGiven+1: getEqual-1].split(',')
-    
-                        signs = []
-                        for condition in conditions:
-                            sign = getValue(condition)
-                            signs.append(sign)
-                            ancestor = condition[1:]
-                            ancestors.append(ancestor)
-    
-                        node.probabilities.update({tuple(signs):float(value)})
-                        node.ancestors = ancestors
-                    else:
-                        #get value of sign
-                        sign = getValue(prob[getGiven+1:])
-    
-                        #Get value of prob
-                        getEqual = prob.find('=') + 1
-                        value = float(prob[getEqual:])
-    
-                        ancestors.append(prob[getGiven+2: getEqual-1])
-                        node.ancestors = ancestors #add ancestors to the node
-    
-                        node.probabilities.update({(sign,):value}) #add probabilities
-    
-                else:
-                    #get value of sign
-                    sign = getValue(prob)
-    
-                    #Get the value
-                    getEqual = prob.find('=') + 1
-                    value = float(prob[getEqual:])
-                    node.ancestors = []
-                    node.probabilities = {(sign,):value}
-                    
-    # for node in bayesNet:
-    #     print 'variable:', node.name
-    #     print 'ancestors:', node.ancestors
-    #     print 'probabilities:', node.probabilities
 
-    
-        
-#main
-input = fileinput.input()
-aux = 0
-bayesNet = []
-nodes = []
-Queries = []
-Probabilities = []
-states = [] #all variables
+        node = bayesNet[variable]
 
-#Get Nodes, Probabilities and Queries from the file
-for line in input:
-    #Get Nodes
-    if aux == 1:
-        nodes = line.rstrip('\n')
-        nodes = nodes.split(", ")
-        aux = 0
-    
-    #Get probabilities
-    if aux == 2:
-        if line != '\n':
-            probability = line.rstrip('\n')
-            Probabilities.append(probability)
+        if prob.find('|') != -1:
+            # Get the value
+            getEqual = prob.find('=') + 1
+            value = prob[getEqual:]
+            # get ancestors
+            ancestors = []
+
+            if prob.find(',') != -1:
+                conditions = prob[getGiven+1: getEqual-1].split(',')
+
+                signs = []
+                for condition in conditions:
+                    sign = getSign(condition)
+                    signs.append(sign)
+                    ancestor = condition[1:]
+                    ancestors.append(ancestor)
+
+                node.probabilities.update({tuple(signs): float(value)})
+                node.ancestors = ancestors
+            else:
+                # get value of sign
+                sign = getSign(prob[getGiven+1:])
+
+                # Get value of prob
+                getEqual = prob.find('=') + 1
+                value = float(prob[getEqual:])
+
+                ancestors.append(prob[getGiven+2: getEqual-1])
+                node.ancestors = ancestors  # add ancestors to the node
+
+                node.probabilities.update({(sign,): value})  # add probabilities
+
         else:
-            aux = 0
-    
-    #Get Queries
-    if aux == 3:
-        if line != '\n':
-            query = line.rstrip('\n')
-            Queries.append(query)
-        else:
-            aux = 0
+            # get value of sign
+            sign = getSign(prob)
 
-    if line == "[Nodes]\n":
-        aux = 1
+            # Get the value
+            getEqual = prob.find('=') + 1
+            value = float(prob[getEqual:])
+            node.ancestors = []
+            node.probabilities = {(sign,): value}
 
-    if line == "[Probabilities]\n":
-        aux = 2
 
-    if line == "[Queries]\n":
-        aux = 3
-    
-# print 'nodes', nodes;
-# print 'Queries', Queries;
-# print 'Probabilities', Probabilities;
+# returns the probability of node with nodeName being isTrue
+def getProbability(nodeName, isTrue, events, bayesNet):
+    ancestors = bayesNet[nodeName].ancestors
 
-#create nodes
-createNodes(nodes)
-
-#for each probability, add ancestors and probabilities to the node
-createProbabilities(Probabilities)
-
-#for each Query, get each state and sign
-for query in Queries:
-    query = query.replace(" ", "") # delete blank spaces
-
-    queryAssign = []
-    evidence = []
-    events = {}
-    
-    #if there is evidence
-    if query.find('|') != -1:
-        getGiven = query.find('|')
-        assigment = query[:getGiven]
-        ev = query[getGiven+1:]
-        
-        #more than one query
-        if assigment.find(',') != -1: 
-            queryAssign = assigment.split(',')
-            evidence = ev.split(',')
-
-            #create dictionary of events
-            signs = []
-            for e in evidence:
-                sign = getValue(e)
-                value = e[1:]
-                events.update({value:sign})
-
-            print 'queryAssign', queryAssign
-            print 'events', events
-            
-            # call the enumerationAsk function to figure out a probability.
-            # count = 0
-            # result = 1
-            # for i in range(0,len(queryAssign)):
-            #     if count == 0:
-            #         typeRes = getValue(queryAssign[i])
-            #         variable = queryAssign[i][1:]
-            #         result = enumerationAsk(states,bayesNet,variable,typeRes, events)
-            #         count+=1
-            #     else:
-            #         sign = getValue(queryAssign[i-1])
-            #         value = queryAssign[i-1][1:]
-            #         events.update({value:sign})
-            #         typeRes = getValue(queryAssign[i])
-            #         variable = queryAssign[i][1:]
-            #         result *= enumerationAsk(states,bayesNet,variable,typeRes, events)
-            #         count+=1
-            # print(('%.7f'%result).rstrip('0'))
-
-        else: # only one query
-            evidence = ev.split(',')
-
-            typeRes = getValue(assigment)
-            variable = assigment[1:]
-
-            #create dictionary of events
-            signs = []
-            for e in evidence:
-                sign = getValue(e)
-                value = e[1:]
-                events.update({value:sign})
-                
-            print 'queryAssign', queryAssign
-            print 'events', events
-                
-            # call the enumerationAsk function to figure out a probability.
-            # result =  enumerationAsk(states,bayesNet,variable,typeRes, events)
-            # print(('%.7f'%result).rstrip('0'))
-
+    if len(ancestors) == 0:
+        probability = bayesNet[nodeName].probabilities[(True,)]
     else:
-        #there are no events
-        typeRes = getValue(query)
-        variable = query[1:]
-        print typeRes
-        print variable
-        # call the enumerationAsk function to figure out a probability.
-        # result =  enumerationAsk(states,bayesNet,variable,typeRes, {})
-        # print(('%.7f'%result).rstrip('0'))
+        permutation = []
+        for ancestor in ancestors:
+            permutation.append(events[ancestor])
+        probability = bayesNet[nodeName].probabilities[tuple(permutation)]
+
+    if isTrue:
+        return probability
+    else:
+        return 1.0 - probability
+
+
+# calculates total probability by enumeration
+def enumerate(states, bayesNet, query, isTrue, events):
+    totalProb = {}
+    auxevents = events
+
+    # enumerate for positive
+    auxevents[query] = True
+    totalProb[True] = enumerateAll(states, auxevents, bayesNet)
+
+    # enumerate for negative
+    auxevents[query] = False
+    totalProb[False] = enumerateAll(states, auxevents, bayesNet)
+
+    # normalize the probabilities
+    toalSum = totalProb[True] + totalProb[False]
+    totalProb[True] /= toalSum
+    totalProb[False] /= toalSum
+
+    return totalProb[isTrue]
+
+
+def enumerateAll(states, events, bayesNet):
+    if len(states) == 0:
+        return 1.0
+    currentState = states[0]
+    if currentState in events:
+        # if the state is not hidden
+        val = getProbability(currentState, events[currentState], events, bayesNet)
+        val *= enumerateAll(states[1:], events, bayesNet)
+        return val
+    else:
+        # if the state is hidden and not in events, eliminate summation variables
+        total = 0
+        events[currentState] = True
+        total += getProbability(currentState, True, events, bayesNet) * enumerateAll(states[1:], events, bayesNet)
+        events[currentState] = False
+        total += getProbability(currentState, False, events, bayesNet) * enumerateAll(states[1:], events, bayesNet)
+        del events[currentState]
+        return total
+
+
+def getSign(p):
+    sign = p[0]
+    if sign == "+":
+        sign = True
+    else:
+        sign = False
+    return sign
+
+
+if __name__ == "__main__":
+    input = fileinput.input()
+    aux = 0
+    bayesNet = {}
+    nodes = []
+    Queries = []
+    Probabilities = []
+    states = []  # all variables
+
+    # Get Nodes, Probabilities and Queries from the file
+    for line in input:
+        # Get Nodes
+        if aux == 1:
+            nodes = line.rstrip('\n')
+            nodes = nodes.split(", ")
+            aux = 0
+
+        # Get Probabilities
+        if aux == 2:
+            if line != '\n':
+                probability = line.rstrip('\n')
+                Probabilities.append(probability)
+            else:
+                aux = 0
+
+        # Get Queries
+        if aux == 3:
+            if line != '\n':
+                query = line.rstrip('\n')
+                Queries.append(query)
+            else:
+                aux = 0
+
+        if line == "[Nodes]\n":
+            aux = 1
+
+        if line == "[Probabilities]\n":
+            aux = 2
+
+        if line == "[Queries]\n":
+            aux = 3
+
+        # print 'nodes', nodes;
+        # print 'Queries', Queries;
+        # print 'Probabilities', Probabilities;
+
+    # create nodes
+    createNodes(nodes)
+
+    # for each probability, add ancestors and probabilities to the node
+    createProbabilities(Probabilities)
+
+    # for each Query, get each state and sign
+    for query in Queries:
+        query = query.replace(" ", "")
+
+        queryAssign = []
+        evidence = []
+        events = {}
+
+        # if there is evidence
+        if query.find('|') != -1:
+            getGiven = query.find('|')
+            assigment = query[:getGiven]
+            ev = query[getGiven+1:]
+
+            # more than one query
+            if assigment.find(',') != -1:
+                queryAssign = assigment.split(',')
+                evidence = ev.split(',')
+
+                # create dictionary of events
+                signs = []
+                for e in evidence:
+                    sign = getSign(e)
+                    value = e[1:]
+                    events.update({value: sign})
+
+                # print 'queryAssign', queryAssign
+                # print 'events', events
+
+                # call the enumerate function to figure out a probability.
+                count = 0
+                result = 1
+                for i in range(0, len(queryAssign)):
+                    if count == 0:
+                        isTrue = getSign(queryAssign[i])
+                        variable = queryAssign[i][1:]
+                        result = enumerate(states, bayesNet, variable, isTrue, events)
+                        count += 1
+                    else:
+                        sign = getSign(queryAssign[i-1])
+                        value = queryAssign[i-1][1:]
+                        events.update({value: sign})
+                        isTrue = getSign(queryAssign[i])
+                        variable = queryAssign[i][1:]
+                        result *= enumerate(states, bayesNet, variable, isTrue, events)
+                        count += 1
+                print(('%.7f' % result).rstrip('0'))
+
+            else:
+                # only one query
+                evidence = ev.split(',')
+
+                isTrue = getSign(assigment)
+                variable = assigment[1:]
+
+                # create dictionary of events
+                signs = []
+                for e in evidence:
+                    sign = getSign(e)
+                    value = e[1:]
+                    events.update({value: sign})
+
+                # print 'queryAssign', queryAssign
+                # print 'events', events
+                # call the enumerate function to figure out a probability.
+                result = enumerate(states, bayesNet, variable, isTrue, events)
+                print(('%.7f' % result).rstrip('0'))
+
+        else:
+            # there are no events
+            isTrue = getSign(query)
+            variable = query[1:]
+            # print isTrue
+            # print variable
+
+            # call the enumerate function to figure out a probability.
+            result = enumerate(states, bayesNet, variable, isTrue, {})
+            print(('%.7f' % result).rstrip('0'))
