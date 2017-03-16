@@ -10,7 +10,6 @@ class Node(object):
         self.ancestors = None
         self.probabilities = None  # probabilities given from the input file
 
-
 # create all nodes
 def createNodes(nodes):
     for name in nodes:
@@ -25,7 +24,7 @@ def createNodes(nodes):
 
 
 # return False, True value of the sign given
-def getSign(p):
+def getValue(p):
     sign = p[0]
     if sign == "+":
         sign = True
@@ -65,7 +64,7 @@ def createProbabilities(probabilities):
 
                 signs = []
                 for condition in conditions:
-                    sign = getSign(condition)
+                    sign = getValue(condition)
                     signs.append(sign)
                     ancestor = condition[1:]
                     ancestors.append(ancestor)
@@ -74,7 +73,7 @@ def createProbabilities(probabilities):
                 node.ancestors = ancestors
             else:
                 # get value of sign
-                sign = getSign(prob[getGiven+1:])
+                sign = getValue(prob[getGiven+1:])
 
                 # Get value of prob
                 getEqual = prob.find('=') + 1
@@ -87,7 +86,7 @@ def createProbabilities(probabilities):
 
         else:
             # get value of sign
-            sign = getSign(prob)
+            sign = getValue(prob)
 
             # Get the value
             getEqual = prob.find('=') + 1
@@ -155,7 +154,7 @@ def enumerateAll(states, events, bayesNet):
         return total
 
 
-def getSign(p):
+def getValue(p):
     sign = p[0]
     if sign == "+":
         sign = True
@@ -237,7 +236,7 @@ if __name__ == "__main__":
                 # create dictionary of events
                 signs = []
                 for e in evidence:
-                    sign = getSign(e)
+                    sign = getValue(e)
                     value = e[1:]
                     events.update({value: sign})
 
@@ -249,15 +248,15 @@ if __name__ == "__main__":
                 result = 1
                 for i in range(0, len(queryAssign)):
                     if count == 0:
-                        isTrue = getSign(queryAssign[i])
+                        isTrue = getValue(queryAssign[i])
                         variable = queryAssign[i][1:]
                         result = enumerate(states, bayesNet, variable, isTrue, events)
                         count += 1
                     else:
-                        sign = getSign(queryAssign[i-1])
+                        sign = getValue(queryAssign[i-1])
                         value = queryAssign[i-1][1:]
                         events.update({value: sign})
-                        isTrue = getSign(queryAssign[i])
+                        isTrue = getValue(queryAssign[i])
                         variable = queryAssign[i][1:]
                         result *= enumerate(states, bayesNet, variable, isTrue, events)
                         count += 1
@@ -267,13 +266,13 @@ if __name__ == "__main__":
                 # only one query
                 evidence = ev.split(',')
 
-                isTrue = getSign(assigment)
+                isTrue = getValue(assigment)
                 variable = assigment[1:]
 
                 # create dictionary of events
                 signs = []
                 for e in evidence:
-                    sign = getSign(e)
+                    sign = getValue(e)
                     value = e[1:]
                     events.update({value: sign})
 
@@ -285,7 +284,7 @@ if __name__ == "__main__":
 
         else:
             # there are no events
-            isTrue = getSign(query)
+            isTrue = getValue(query)
             variable = query[1:]
             # print isTrue
             # print variable

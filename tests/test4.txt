@@ -1,0 +1,17 @@
+[Nodes]
+Rain, Cold, Get_a_cold
+
+[Probabilities]
++Rain = 0.3
++Cold|+Rain=0.8
++Cold|-Rain=0.4
++Get_a_cold|+Cold, +Rain = 0.8
++Get_a_cold|-Cold, +Rain = 0.3
++Get_a_cold|+Cold, -Rain = 0.6
++Get_a_cold|-Cold, -Rain = 0.1
+
+[Queries]
++Get_a_cold|-Cold
++Rain|+Cold
++Cold|-Rain,+Get_a_cold
++Rain|-Get_a_cold
